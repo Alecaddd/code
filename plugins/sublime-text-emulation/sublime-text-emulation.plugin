@@ -1,0 +1,10 @@
+[Plugin]
+Module=sublime-text-emulation
+Loader=C
+IAge=2
+Name=Sublime Text Emulation
+Description=Use Sublime Text commands in Code
+Icon=text-x-script
+Authors=Alessandro Castellani <castellani.ale@gmail.com>
+Copyright=Copyright © 2018 Alessandro Castellani
+Website=https://github.com/elementary/code
