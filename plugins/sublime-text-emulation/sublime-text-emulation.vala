@@ -15,12 +15,13 @@
   with this program.  If not, see <http://www.gnu.org/licenses/>
 
   END LICENSE
-***/
+***/]
 
 public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Activatable {
 
-    Gee.TreeSet<Scratch.Widgets.SourceView> views;
+    Gee.TreeSet<Scratch.Widgets.SourceVie[w> views;
     Scratch.Widgets.SourceView? view = null;
+    Scratch.Widgets.SplitView? split_view = null;
 
     Scratch.Services.Interface plugins;
     public Object object { owned get; construct; }
@@ -35,6 +36,7 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
         plugins = (Scratch.Services.Interface) object;
         plugins.hook_document.connect ((doc) => {
             this.view = doc.source_view;
+            // this.split_view = doc.split_view;
             this.view.key_press_event.disconnect (handle_key_press);
             this.view.key_press_event.connect (handle_key_press);
             this.views.add (view);
@@ -48,6 +50,7 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
     }
 
     private bool handle_key_press (Gdk.EventKey event) {
+        debug (event.keyval.to_string ());
         //some extensions to the default navigating
         bool ctrl = (event.state & Gdk.ModifierType.CONTROL_MASK) != 0;
         bool shift = (event.state & Gdk.ModifierType.SHIFT_MASK) != 0;
@@ -62,94 +65,37 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
             return true;
         }
 
-        if (ctrl && event.keyval == Gdk.Key.z) {
-            debug ("undo");
+        // select line
+        if (ctrl && event.keyval == Gdk.Key.l) {
+            select_line ();
+            return true;
         }
 
-        // Parse commands
-        // switch (event.keyval) {
-            //navigation
-            // case Gdk.Key.Left:
-            // case Gdk.Key.h:
-            //     view.move_cursor (Gtk.MovementStep.VISUAL_POSITIONS, -1, false);
-            //     break;
-            // case Gdk.Key.Down:
-            // case Gdk.Key.j:
-            // case Gdk.Key.plus:
-            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, 1, false);
-            //     break;
-            // case Gdk.Key.Up:
-            // case Gdk.Key.k:
-            // case Gdk.Key.minus:
-            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, -1, false);
-            //     break;
-            // case Gdk.Key.Right:
-            // case Gdk.Key.l:
-            //     view.move_cursor (Gtk.MovementStep.VISUAL_POSITIONS, 1, false);
-            //     break;
-            // case Gdk.Key.End:
-            // case Gdk.Key.dollar:
-            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, false);
-            //     break;
-            // case Gdk.Key.u:
-            //     view.undo ();
-            //     break;
-            // case Gdk.Key.H:
-            //     view.move_cursor (Gtk.MovementStep.BUFFER_ENDS, -1, false);
-            //     break;
-            // case Gdk.Key.L:
-            //     view.move_cursor (Gtk.MovementStep.BUFFER_ENDS, 1, false);
-            //     break;
-            // case Gdk.Key.w:
-            //     view.move_cursor (Gtk.MovementStep.WORDS, 1, false);
-            //     break;
-            // case Gdk.Key.b:
-            //     view.move_cursor (Gtk.MovementStep.WORDS, -1, false);
-            //     break;
-            // case Gdk.Key.I:
-            //     if (mode == Mode.INSERT) {
-            //         return false;
-            //     }
+        // select multiple identical word
+        if (ctrl && event.keyval == Gdk.Key.d) {
 
-            //     mode = Mode.INSERT;
-            //     var buffer = view.buffer;
-            //     Gtk.TextIter start, end;
-            //     buffer.get_selection_bounds (out start, out end);
-            //     buffer.get_iter_at_mark (out start, buffer.get_insert ());
-            //     start.backward_sentence_start ();
-            //     buffer.place_cursor (start);
-            //     debug ("Vim Emulation: INSERT Mode!");
-            //     break;
-            // case Gdk.Key.A:
-            //     if (mode == Mode.INSERT) {
-            //         return false;
-            //     }
+            return true;
+        }
 
-            //     mode = Mode.INSERT;
-            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, false);
-            //     debug ("Vim Emulation: INSERT Mode!");
-            //     break;
-            // case 46: // Dot "."
-            //     debug (action);
-            //     view.insert_at_cursor (action);
-            //     break;
-            // case Gdk.Key.Home:
-            // case Gdk.Key.@0:
-            //     if (number == "") {
-            //         view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, 1, false);
-            //     } else {
-            //         number += "0";
-            //     }
+        if (ctrl && shift && event.keyval == Gdk.Key.d) {
+            view.duplicate_selection ();
+            return true;
+        }
 
-            //     break;
-            // case Gdk.Key.e:
-            //     view.move_cursor (Gtk.MovementStep.WORDS, number == "" ? 1 : int.parse (number), false);
-            //     break;
-            // case Gdk.Key.g:
-            //     g = true;
-            //     view.go_to_line (int.parse (number));
-            //     break;
-        // }
+        if (ctrl && event.keyval == 47) {
+            toggle_comment ();
+            return true;
+        }
+
+        if (ctrl && event.keyval == 91) {
+            // Indent selection/line
+            return true;
+        }
+
+        if (ctrl && event.keyval == 93) {
+            // Remove Indent selection/line
+            return true;
+        }
 
         return false;
     }
@@ -157,6 +103,24 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
     private void move_line_selection (bool up, bool select) {
         int move = up ? -1 : 1;
         view.move_lines (false, move);
+    }
+
+    private void select_line () {
+        Gtk.TextIter start, end;
+        view.buffer.get_selection_bounds (out start, out end);
+    }
+
+    private void toggle_comment () {
+        // view = split_view.get_focus_child () as Scratch.Widgets.DocumentView;
+        // var doc = view.current_document;
+        // if (doc == null) {
+        //     return;
+        // }
+
+        // var buffer = doc.source_view.buffer;
+        // if (buffer is Gtk.SourceBuffer) {
+        //     CommentToggler.toggle_comment (buffer as Gtk.SourceBuffer);
+        // }
     }
 }
 
