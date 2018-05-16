@@ -19,17 +19,6 @@
 
 public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Activatable {
 
-    public enum Mode {
-        COMMAND,
-        INSERT,
-        VISUAL
-    }
-
-    Mode mode = Mode.INSERT;
-    string number = "";
-    string action = "";
-    bool g = false;
-
     Gee.TreeSet<Scratch.Widgets.SourceView> views;
     Scratch.Widgets.SourceView? view = null;
 
@@ -40,9 +29,7 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
         views = new Gee.TreeSet<Scratch.Widgets.SourceView> ();
     }
 
-    public void update_state () {
-
-    }
+    public void update_state () {}
 
     public void activate () {
         plugins = (Scratch.Services.Interface) object;
@@ -66,195 +53,110 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
         bool shift = (event.state & Gdk.ModifierType.SHIFT_MASK) != 0;
 
         if (ctrl && shift && event.keyval == Gdk.Key.Up) {
-            move_paragraph (true, shift);
+            move_line_selection (true, shift);
             return true;
         }
 
         if (ctrl && shift && event.keyval == Gdk.Key.Down) {
-            move_paragraph (false, shift);
+            move_line_selection (false, shift);
             return true;
         }
 
-        int old_len = number.length;
-        // Firstly let's set the mode
-        switch (event.keyval) {
-            //mode changing
-            case Gdk.Key.i:
-                if (mode == Mode.INSERT) {
-                    return false;
-                } else {
-                    // clean action string
-                    action = "";
-                }
-
-                mode = Mode.INSERT;
-                debug ("Vim Emulation: INSERT Mode!");
-                return true;
-            case Gdk.Key.Escape:
-                mode = Mode.COMMAND;
-                debug ("Vim Emulation: COMMAND Mode!");
-                break;
-        }
-
-        if (mode == Mode.INSERT) {
-            action += event.str;
-            return false;
+        if (ctrl && event.keyval == Gdk.Key.z) {
+            debug ("undo");
         }
 
         // Parse commands
-        switch (event.keyval) {
-            //numbers
-            case Gdk.Key.@1:
-                number += "1";
-                break;
-            case Gdk.Key.@2:
-                number += "2";
-                break;
-            case Gdk.Key.@3:
-                number += "3";
-                break;
-            case Gdk.Key.@4:
-                number += "4";
-                break;
-            case Gdk.Key.@5:
-                number += "5";
-                break;
-            case Gdk.Key.@6:
-                number += "6";
-                break;
-            case Gdk.Key.@7:
-                number += "7";
-                break;
-            case Gdk.Key.@8:
-                number += "8";
-                break;
-            case Gdk.Key.@9:
-                number += "9";
-                break;
-            //case 0, see below
-
+        // switch (event.keyval) {
             //navigation
-            case Gdk.Key.Left:
-            case Gdk.Key.h:
-                view.move_cursor (Gtk.MovementStep.VISUAL_POSITIONS, -1, false);
-                break;
-            case Gdk.Key.Down:
-            case Gdk.Key.j:
-            case Gdk.Key.plus:
-                view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, 1, false);
-                break;
-            case Gdk.Key.Up:
-            case Gdk.Key.k:
-            case Gdk.Key.minus:
-                view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, -1, false);
-                break;
-            case Gdk.Key.Right:
-            case Gdk.Key.l:
-                view.move_cursor (Gtk.MovementStep.VISUAL_POSITIONS, 1, false);
-                break;
-            case Gdk.Key.End:
-            case Gdk.Key.dollar:
-                view.move_cursor (Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, false);
-                break;
-            case Gdk.Key.u:
-                view.undo ();
-                break;
-            case Gdk.Key.H:
-                view.move_cursor (Gtk.MovementStep.BUFFER_ENDS, -1, false);
-                break;
-            case Gdk.Key.L:
-                view.move_cursor (Gtk.MovementStep.BUFFER_ENDS, 1, false);
-                break;
-            case Gdk.Key.w:
-                view.move_cursor (Gtk.MovementStep.WORDS, 1, false);
-                break;
-            case Gdk.Key.b:
-                view.move_cursor (Gtk.MovementStep.WORDS, -1, false);
-                break;
-            case Gdk.Key.I:
-                if (mode == Mode.INSERT) {
-                    return false;
-                }
+            // case Gdk.Key.Left:
+            // case Gdk.Key.h:
+            //     view.move_cursor (Gtk.MovementStep.VISUAL_POSITIONS, -1, false);
+            //     break;
+            // case Gdk.Key.Down:
+            // case Gdk.Key.j:
+            // case Gdk.Key.plus:
+            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, 1, false);
+            //     break;
+            // case Gdk.Key.Up:
+            // case Gdk.Key.k:
+            // case Gdk.Key.minus:
+            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, -1, false);
+            //     break;
+            // case Gdk.Key.Right:
+            // case Gdk.Key.l:
+            //     view.move_cursor (Gtk.MovementStep.VISUAL_POSITIONS, 1, false);
+            //     break;
+            // case Gdk.Key.End:
+            // case Gdk.Key.dollar:
+            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, false);
+            //     break;
+            // case Gdk.Key.u:
+            //     view.undo ();
+            //     break;
+            // case Gdk.Key.H:
+            //     view.move_cursor (Gtk.MovementStep.BUFFER_ENDS, -1, false);
+            //     break;
+            // case Gdk.Key.L:
+            //     view.move_cursor (Gtk.MovementStep.BUFFER_ENDS, 1, false);
+            //     break;
+            // case Gdk.Key.w:
+            //     view.move_cursor (Gtk.MovementStep.WORDS, 1, false);
+            //     break;
+            // case Gdk.Key.b:
+            //     view.move_cursor (Gtk.MovementStep.WORDS, -1, false);
+            //     break;
+            // case Gdk.Key.I:
+            //     if (mode == Mode.INSERT) {
+            //         return false;
+            //     }
 
-                mode = Mode.INSERT;
-                var buffer = view.buffer;
-                Gtk.TextIter start, end;
-                buffer.get_selection_bounds (out start, out end);
-                buffer.get_iter_at_mark (out start, buffer.get_insert ());
-                start.backward_sentence_start ();
-                buffer.place_cursor (start);
-                debug ("Vim Emulation: INSERT Mode!");
-                break;
-            case Gdk.Key.A:
-                if (mode == Mode.INSERT) {
-                    return false;
-                }
+            //     mode = Mode.INSERT;
+            //     var buffer = view.buffer;
+            //     Gtk.TextIter start, end;
+            //     buffer.get_selection_bounds (out start, out end);
+            //     buffer.get_iter_at_mark (out start, buffer.get_insert ());
+            //     start.backward_sentence_start ();
+            //     buffer.place_cursor (start);
+            //     debug ("Vim Emulation: INSERT Mode!");
+            //     break;
+            // case Gdk.Key.A:
+            //     if (mode == Mode.INSERT) {
+            //         return false;
+            //     }
 
-                mode = Mode.INSERT;
-                view.move_cursor (Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, false);
-                debug ("Vim Emulation: INSERT Mode!");
-                break;
-            case 46: // Dot "."
-                debug (action);
-                view.insert_at_cursor (action);
-                break;
-            case Gdk.Key.Home:
-            case Gdk.Key.@0:
-                if (number == "") {
-                    view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, 1, false);
-                } else {
-                    number += "0";
-                }
+            //     mode = Mode.INSERT;
+            //     view.move_cursor (Gtk.MovementStep.DISPLAY_LINE_ENDS, 1, false);
+            //     debug ("Vim Emulation: INSERT Mode!");
+            //     break;
+            // case 46: // Dot "."
+            //     debug (action);
+            //     view.insert_at_cursor (action);
+            //     break;
+            // case Gdk.Key.Home:
+            // case Gdk.Key.@0:
+            //     if (number == "") {
+            //         view.move_cursor (Gtk.MovementStep.DISPLAY_LINES, 1, false);
+            //     } else {
+            //         number += "0";
+            //     }
 
-                break;
-            case Gdk.Key.e:
-                view.move_cursor (Gtk.MovementStep.WORDS, number == "" ? 1 : int.parse (number), false);
-                break;
-            case Gdk.Key.g:
-                g = true;
-                view.go_to_line (int.parse (number));
-                break;
-        }
+            //     break;
+            // case Gdk.Key.e:
+            //     view.move_cursor (Gtk.MovementStep.WORDS, number == "" ? 1 : int.parse (number), false);
+            //     break;
+            // case Gdk.Key.g:
+            //     g = true;
+            //     view.go_to_line (int.parse (number));
+            //     break;
+        // }
 
-        //if there weren't any numbers added, we probably used it, so we reset it
-        if (old_len == number.length) {
-            number = "";
-        }
-
-        return true;
+        return false;
     }
 
-    private void move_paragraph (bool up, bool select) {
-        var buffer = view.buffer;
-
-        Gtk.TextIter iter, start, end;
-        buffer.get_iter_at_offset (out iter, buffer.cursor_position);
-
-        var search = "\n\n";
-        bool success = false;
-        if (up) {
-            success = iter.backward_search (search, 0, out start, out end, null);
-        } else {
-            success = iter.forward_search (search, 0, out start, out end, null);
-        }
-
-        if (!success) {
-            if (up) {
-                buffer.get_start_iter (out start);
-            } else {
-                buffer.get_end_iter (out start);
-            }
-        } else {
-            start.forward_char ();
-        }
-
-        if (select) {
-            buffer.select_range (start, iter);
-        } else {
-            buffer.place_cursor (start);
-        }
-
-        view.scroll_to_iter (start, 0, false, 0, 0);
+    private void move_line_selection (bool up, bool select) {
+        int move = up ? -1 : 1;
+        view.move_lines (false, move);
     }
 }
 
