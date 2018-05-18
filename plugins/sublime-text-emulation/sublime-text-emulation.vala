@@ -36,21 +36,30 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
 
     public void activate () {
         plugins = (Scratch.Services.Interface) object;
+
         plugins.hook_window.connect ((win) => {
             this.window = win;
+            var action_l = win.actions.lookup_action ("action_to_lower_case") as SimpleAction;
+            action_l.set_enabled (false);
+            action_l.activate.connect (select_line);
         });
+
         plugins.hook_document.connect ((doc) => {
             this.view = doc.source_view;
             this.view.key_press_event.disconnect (handle_key_press);
             this.view.key_press_event.connect (handle_key_press);
             this.views.add (view);
         });
+
         plugins.hook_split_view.connect ((view) => {
             this.split_view = view;
         });
     }
 
     public void deactivate () {
+        var action_l = this.window.actions.lookup_action ("action_to_lower_case") as SimpleAction;
+        action_l.activate.disconnect (select_line);
+
         foreach (var v in views) {
             v.key_press_event.disconnect (handle_key_press);
         }
@@ -72,9 +81,7 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
             return true;
         }
 
-        // select line
         if (ctrl && event.keyval == Gdk.Key.l) {
-            debug ("SELECT LINE ==========================");
             select_line ();
             return true;
         }
@@ -114,7 +121,24 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
     }
 
     private void select_line () {
-        debug ("SELECT LINE ==========================");
+        var current_view = this.split_view.get_focus_child () as Scratch.Widgets.DocumentView;
+        var doc = current_view.current_document;
+        if (doc == null) {
+             return;
+        }
+
+        var buffer = doc.source_view.buffer;
+        if (buffer is Gtk.SourceBuffer) {
+            Gtk.TextIter start, end;
+            var sel = buffer.get_selection_bounds (out start, out end);
+            start.set_line_offset (0);
+            if (end.starts_line ()) {
+                end.backward_char ();
+            } else if (!end.ends_line ()) {
+                end.forward_to_line_end ();
+            }
+            buffer.select_range (start, end);
+        }
     }
 
     private void toggle_comment () {
