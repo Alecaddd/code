@@ -58,6 +58,7 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
 
     public void deactivate () {
         var action_l = this.window.actions.lookup_action ("action_to_lower_case") as SimpleAction;
+        action_l.set_enabled (true);
         action_l.activate.disconnect (select_line);
 
         foreach (var v in views) {
