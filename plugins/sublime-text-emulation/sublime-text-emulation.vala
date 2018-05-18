@@ -15,11 +15,13 @@
   with this program.  If not, see <http://www.gnu.org/licenses/>
 
   END LICENSE
-***/]
+***/
 
 public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Activatable {
 
-    Gee.TreeSet<Scratch.Widgets.SourceVie[w> views;
+    Gee.TreeSet<Scratch.Widgets.SourceView> views;
+
+    Scratch.MainWindow? window = null;
     Scratch.Widgets.SourceView? view = null;
     Scratch.Widgets.SplitView? split_view = null;
 
@@ -34,12 +36,17 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
 
     public void activate () {
         plugins = (Scratch.Services.Interface) object;
+        plugins.hook_window.connect ((win) => {
+            this.window = win;
+        });
         plugins.hook_document.connect ((doc) => {
             this.view = doc.source_view;
-            // this.split_view = doc.split_view;
             this.view.key_press_event.disconnect (handle_key_press);
             this.view.key_press_event.connect (handle_key_press);
             this.views.add (view);
+        });
+        plugins.hook_split_view.connect ((view) => {
+            this.split_view = view;
         });
     }
 
@@ -50,7 +57,7 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
     }
 
     private bool handle_key_press (Gdk.EventKey event) {
-        debug (event.keyval.to_string ());
+        // debug (event.keyval.to_string ());
         //some extensions to the default navigating
         bool ctrl = (event.state & Gdk.ModifierType.CONTROL_MASK) != 0;
         bool shift = (event.state & Gdk.ModifierType.SHIFT_MASK) != 0;
@@ -67,6 +74,7 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
 
         // select line
         if (ctrl && event.keyval == Gdk.Key.l) {
+            debug ("SELECT LINE ==========================");
             select_line ();
             return true;
         }
@@ -106,21 +114,20 @@ public class Scratch.Plugins.SublimeTextEmulation : Peas.ExtensionBase,  Peas.Ac
     }
 
     private void select_line () {
-        Gtk.TextIter start, end;
-        view.buffer.get_selection_bounds (out start, out end);
+        debug ("SELECT LINE ==========================");
     }
 
     private void toggle_comment () {
-        // view = split_view.get_focus_child () as Scratch.Widgets.DocumentView;
-        // var doc = view.current_document;
-        // if (doc == null) {
-        //     return;
-        // }
+        var current_view = this.split_view.get_focus_child () as Scratch.Widgets.DocumentView;
+        var doc = current_view.current_document;
+        if (doc == null) {
+             return;
+        }
 
-        // var buffer = doc.source_view.buffer;
-        // if (buffer is Gtk.SourceBuffer) {
-        //     CommentToggler.toggle_comment (buffer as Gtk.SourceBuffer);
-        // }
+        var buffer = doc.source_view.buffer;
+        if (buffer is Gtk.SourceBuffer) {
+            CommentToggler.toggle_comment (buffer as Gtk.SourceBuffer);
+        }
     }
 }
 
